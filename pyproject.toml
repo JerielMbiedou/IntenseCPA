@@ -1,9 +1,12 @@
 [tool.poetry]
-name = "cpa-tools"
-version = "0.8.8"
-description = "Compositional Perturbation Autoencoder (CPA)"
-authors = ["Mohsen Naghipourfar <naghipourfar@berkeley.edu>"]
-license = "MIT"
+name = "intense-cpa"
+version = "0.1.0"
+description = "Intense-CPA: Compositional Perturbation Autoencoder with Interpretable Tensor Fusion (fork of theislab/cpa)"
+authors = ["Jeriel Nkouadja Mbiedou <jerielmbiedou86@gmail.com>"]
+maintainers = ["Jeriel Nkouadja Mbiedou <jerielmbiedou86@gmail.com>"]
+repository = "https://github.com/JerielMbiedou/IntenseCPA"
+keywords = ["single-cell", "scRNA-seq", "perturbation", "autoencoder", "tensor fusion", "interpretability"]
+license = "BSD-3-Clause"
 readme = "README.md"
 packages = [
     {include = "cpa"},

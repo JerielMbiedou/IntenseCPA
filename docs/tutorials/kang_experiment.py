@@ -11,7 +11,7 @@ import cpa
 import scanpy as sc
 
 # --- Setting up environment ---
-current_dir = "/home/nmbiedou/Documents/cpa"
+current_dir = os.getenv("INTENSE_CPA_ROOT", os.getcwd())
 sc.settings.set_figure_params(dpi=100)
 data_path = os.path.join(current_dir, "datasets", "kang_normalized_hvg.h5ad")
 

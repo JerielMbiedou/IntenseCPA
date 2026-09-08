@@ -12,7 +12,7 @@
 #SBATCH --error=kang_%j.err      # Error file
 
 # Load required modules
-source /home/nmbiedou/miniconda3/etc/profile.d/conda.sh
+source "$(conda info --base)/etc/profile.d/conda.sh"
 
 # Activate your Conda environment
 conda activate newcpa
@@ -21,7 +21,7 @@ conda activate newcpa
 nvidia-smi
 
 # Run your Python script
-srun python  /home/nmbiedou/Documents/cpa/docs/tutorials/Kang.py
+srun python  ${INTENSE_CPA_ROOT:-.}/docs/tutorials/Kang.py
 
 # Deactivate Conda environment
 conda deactivate

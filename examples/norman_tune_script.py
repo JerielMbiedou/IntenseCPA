@@ -26,10 +26,10 @@ else:
         pass  # If torch is not available, do nothing.
 
 # Define the path to the Norman2019 dataset
-PROJECT_ROOT = "/home/nmbiedou/Documents/cpa"
+PROJECT_ROOT = os.getenv("INTENSE_CPA_ROOT", os.getcwd())
 ORIGINAL_DATA_PATH = os.path.join(PROJECT_ROOT, "datasets", "Norman2019_normalized_hvg.h5ad")
 PREPROCESSED_DATA_PATH = os.path.join(PROJECT_ROOT, "datasets", "Norman2019_normalized_hvg_preprocessed.h5ad")
-LOGGING_DIR = os.getenv("LOGGING_DIR", "/scratch/nmbiedou/autotune")
+LOGGING_DIR = os.getenv("LOGGING_DIR", os.path.join(os.getenv("INTENSE_CPA_SCRATCH", os.path.join(os.getenv("INTENSE_CPA_ROOT", os.getcwd()), "runs")), "autotune"))
 
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:128"
 

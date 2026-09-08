@@ -11,13 +11,13 @@
 #SBATCH --error=combosciplex_intense_%j.err      # Error file
 
 # Load required modules
-source /home/nmbiedou/miniconda3/etc/profile.d/conda.sh
+source "$(conda info --base)/etc/profile.d/conda.sh"
 
 # Activate your Conda environment
 conda activate newcpa
 
 # Run your Python script
-python  /home/nmbiedou/Documents/cpa/docs/tutorials/combosciplex.py
+python  ${INTENSE_CPA_ROOT:-.}/docs/tutorials/combosciplex.py
 
 # Deactivate Conda environment
 conda deactivate

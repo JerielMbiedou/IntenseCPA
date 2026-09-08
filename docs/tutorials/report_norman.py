@@ -21,7 +21,7 @@ from datetime import datetime
 from tabulate import tabulate
 
 # Define directories (adjust paths as needed)
-current_dir = "/home/nmbiedou/Documents/cpa"
+current_dir = os.getenv("INTENSE_CPA_ROOT", os.getcwd())
 results_dir = os.path.join(current_dir, 'lightning_logs', 'experiment_results')
 report_file = os.path.join(results_dir, "final_report.md")
 

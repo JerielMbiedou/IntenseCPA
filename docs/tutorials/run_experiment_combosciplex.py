@@ -37,13 +37,13 @@ def parse_args():
                         help="Regularization rate for INTENSE CPA. Required if use_intense is 1")
     parser.add_argument("--intense_p", type=int, default=None,
                         help="p value for INTENSE CPA. Required if use_intense is 1")
-    parser.add_argument("--current_dir", type=str, default="/scratch/nmbiedou",
+    parser.add_argument("--current_dir", type=str, default=os.getenv("INTENSE_CPA_SCRATCH", os.path.join(os.getenv("INTENSE_CPA_ROOT", os.getcwd()), "runs")),
                         help="Base directory for dataset and logs")
     return parser.parse_args()
 
 
 def setup_paths(current_dir, use_intense, seed, intense_reg_rate, intense_p):
-    data_dir = "/home/nmbiedou/Documents/cpa"
+    data_dir = os.getenv("INTENSE_CPA_ROOT", os.getcwd())
     data_path = os.path.join(data_dir, "datasets", "combo_sciplex_prep_hvg_filtered.h5ad")
     if use_intense:
         save_path = os.path.join(

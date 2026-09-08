@@ -173,11 +173,11 @@ def compute_efficiency(model, adata):
 def main():
     global CONTROL_GROUP
     parser = argparse.ArgumentParser()
-    parser.add_argument("--models_dir", default="/scratch/nmbiedou/experiment_new/Kang_Order_2_tf4",
+    parser.add_argument("--models_dir", default=os.path.join(os.getenv("INTENSE_CPA_SCRATCH", os.path.join(os.getenv("INTENSE_CPA_ROOT", os.getcwd()), "runs")), "Kang_Order_2_tf4"),
                         help="Directory containing pretrained model subfolders")
-    parser.add_argument("--adata", default="/home/nmbiedou/Documents/cpa/datasets/kang_normalized_hvg.h5ad",
+    parser.add_argument("--adata", default=os.path.join(os.getenv("INTENSE_CPA_ROOT", os.getcwd()), "datasets", "kang_normalized_hvg.h5ad"),
                         help="Path to input AnnData (.h5ad)")
-    parser.add_argument("--output_dir", default="/home/nmbiedou/Documents/cpa/metrics")
+    parser.add_argument("--output_dir", default=os.path.join(os.getenv("INTENSE_CPA_ROOT", os.getcwd()), "metrics"))
     parser.add_argument("--control_group", default="ctrl",
                         help="Label of control cells to exclude")
     parser.add_argument("--split_key", default="split_B",

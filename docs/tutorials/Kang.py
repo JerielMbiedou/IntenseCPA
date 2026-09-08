@@ -42,7 +42,7 @@ import scanpy as sc
 #print("Current directory:", os.getcwd())
 #os.chdir("../..")  # Adjust this based on your starting directory
 #print("New directory:", os.getcwd())
-current_dir = "/home/nmbiedou/Documents/cpa"
+current_dir = os.getenv("INTENSE_CPA_ROOT", os.getcwd())
 
 # Uncomment to set GPU visibility
 #os.environ['CUDA_VISIBLE_DEVICES'] = '0'

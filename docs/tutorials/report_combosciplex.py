@@ -28,7 +28,7 @@ from datetime import datetime
 from tabulate import tabulate
 
 # Define directories (adjust these paths as needed)
-current_dir = "/home/nmbiedou/Documents/cpa"
+current_dir = os.getenv("INTENSE_CPA_ROOT", os.getcwd())
 # Results for Combo experiment are stored under:
 results_dir = os.path.join(current_dir, "lightning_logs", "Combo", "experiment_results")
 report_file = os.path.join(results_dir, "final_report_combo_extended.md")

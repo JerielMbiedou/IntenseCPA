@@ -127,3 +127,15 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# IntenseCPA: experiment artefacts & IDE
+.idea/
+lightning_logs/
+runs/
+autotune/
+*.pkl
+*.h5ad
+datasets/
+slurm_logs/
+*.out
+*.err

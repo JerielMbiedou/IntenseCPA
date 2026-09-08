@@ -5,4 +5,4 @@
 import setuptools
 
 if __name__ == "__main__":
-    setuptools.setup(name="cpa-tools")
+    setuptools.setup(name="intense-cpa")

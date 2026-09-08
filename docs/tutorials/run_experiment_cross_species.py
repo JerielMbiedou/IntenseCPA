@@ -24,8 +24,8 @@ parser.add_argument("--intense_p", type=int, default=None, help="p value for int
 args = parser.parse_args()
 
 # --- Setting up environment ---
-current_dir = "/scratch/nmbiedou"
-data_dir = "/home/nmbiedou/Documents/cpa"
+current_dir = os.getenv("INTENSE_CPA_SCRATCH", os.path.join(os.getenv("INTENSE_CPA_ROOT", os.getcwd()), "runs"))
+data_dir = os.getenv("INTENSE_CPA_ROOT", os.getcwd())
 sc.settings.set_figure_params(dpi=100)
 data_path = os.path.join(data_dir, "datasets", "cross_species_new.h5ad")
 

@@ -32,7 +32,7 @@ from tqdm import tqdm
 #print("Current directory:", os.getcwd())
 #os.chdir("../..")  # Adjust this based on your starting directory
 #print("New directory:", os.getcwd())
-current_dir = "/home/nmbiedou/Documents/cpa"
+current_dir = os.getenv("INTENSE_CPA_ROOT", os.getcwd())
 
 data_path = os.path.join(current_dir, "datasets", "combo_sciplex_prep_hvg_filtered.h5ad")
 save_path = os.path.join(current_dir, "lightning_logs", "combo_main_2")

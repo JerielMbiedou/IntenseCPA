@@ -27,10 +27,10 @@ else:
         pass  # If torch is not available, do nothing.
 
 # Define paths based on combo-sciplex structure
-PROJECT_ROOT = "/home/nmbiedou/Documents/cpa"
+PROJECT_ROOT = os.getenv("INTENSE_CPA_ROOT", os.getcwd())
 ORIGINAL_DATA_PATH = os.path.join(PROJECT_ROOT, "datasets", "combo_sciplex_prep_hvg_filtered.h5ad")
 PREPROCESSED_DATA_PATH = os.path.join(PROJECT_ROOT, "datasets", "combo_sciplex_prep_hvg_filtered_preprocessed.h5ad")
-LOGGING_DIR = os.getenv("LOGGING_DIR", "/scratch/nmbiedou/autotune")
+LOGGING_DIR = os.getenv("LOGGING_DIR", os.path.join(os.getenv("INTENSE_CPA_SCRATCH", os.path.join(os.getenv("INTENSE_CPA_ROOT", os.getcwd()), "runs")), "autotune"))
 
 
 os.makedirs(LOGGING_DIR, exist_ok=True)

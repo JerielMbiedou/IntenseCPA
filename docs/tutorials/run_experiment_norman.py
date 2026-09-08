@@ -57,8 +57,8 @@ np.random.seed(args.seed)
 random.seed(args.seed)
 
 # --- Setting up Environment ---
-current_dir = "/scratch/nmbiedou"
-data_dir = "/home/nmbiedou/Documents/cpa"
+current_dir = os.getenv("INTENSE_CPA_SCRATCH", os.path.join(os.getenv("INTENSE_CPA_ROOT", os.getcwd()), "runs"))
+data_dir = os.getenv("INTENSE_CPA_ROOT", os.getcwd())
 sc.settings.set_figure_params(dpi=100)
 data_path = os.path.join(data_dir, "datasets", "Norman2019_normalized_hvg.h5ad")
 

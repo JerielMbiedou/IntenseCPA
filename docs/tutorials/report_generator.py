@@ -3,7 +3,7 @@ import pandas as pd
 from glob import glob
 import numpy as np
 
-current_dir = "/home/nmbiedou/Documents/cpa"
+current_dir = os.getenv("INTENSE_CPA_ROOT", os.getcwd())
 results_dir = os.path.join(current_dir, 'lightning_logs', 'experiment_results')
 os.makedirs(results_dir, exist_ok=True)
 

@@ -7,20 +7,22 @@
 #SBATCH -N 1                    # 1 node
 #SBATCH --gres=gpu:v100:2           # 2 Tesla a100 GPUs
 #SBATCH --partition=gpuidle     # Target gpuidle partition
-#SBATCH --output=/home/nmbiedou/Documents/cpa/examples/slurm_%j.out  # Output log
-#SBATCH --error=/home/nmbiedou/Documents/cpa/examples/slurm_%j.err   # Error log
+#SBATCH --output=examples/slurm_%j.out  # Output log
+#SBATCH --error=examples/slurm_%j.err   # Error log
 
 # Set logging directory explicitly to /scratch
-export LOGGING_DIR="/scratch/nmbiedou/autotune"  # Replace 'nmbiedou' with your actual username
+export INTENSE_CPA_ROOT="${INTENSE_CPA_ROOT:-$(pwd)}"
+export INTENSE_CPA_SCRATCH="${INTENSE_CPA_SCRATCH:-$INTENSE_CPA_ROOT/runs}"
+export LOGGING_DIR="$INTENSE_CPA_SCRATCH/autotune"
 mkdir -p "$LOGGING_DIR"  # Create the directory if it doesn't exist
 
 # Load Conda environment
-source /home/nmbiedou/miniconda3/etc/profile.d/conda.sh
+source "$(conda info --base)/etc/profile.d/conda.sh"
 conda activate newcpa  # Replace with your actual environment name
 
 # Run the hyperparameter tuning script
 echo "Running hyperparameter tuning..."
-srun python /home/nmbiedou/Documents/cpa/examples/norman_tune_script.py
+srun python ${INTENSE_CPA_ROOT:-.}/examples/norman_tune_script.py
 if [ $? -ne 0 ]; then
     echo "Error: Hyperparameter tuning script failed."
     exit 1
