@@ -1,4 +1,15 @@
-from typing import Union, Tuple, List
+from __future__ import annotations
+
+"""InTense components: MKLFusion, TensorFusionModel, and the main InTense module.
+
+This version adds a **tf_latent_dim** hyper‑parameter that linearly projects each
+single‑modality representation to a fixed dimensionality *before* any tensor
+products are taken, exactly as described in Appendix E.5 of the paper (see the
+row labelled “tf latent dim”).
+"""
+
+from typing import Union, Tuple, List, Dict, Optional
+
 import torch
 import torch.nn as nn
 from torch import Tensor
@@ -6,6 +17,9 @@ from torch import Tensor
 from ._normalization_module import VectorWiseBatchNorm, Normalize3
 
 
+# -----------------------------------------------------------------------------
+#                                MKL‑Fusion
+# -----------------------------------------------------------------------------
 class MKLFusion(nn.Module):
     def __init__(
             self,
@@ -69,6 +83,9 @@ class MKLFusion(nn.Module):
         )
 
 
+# -----------------------------------------------------------------------------
+#                             Tensor‑product helper
+# -----------------------------------------------------------------------------
 class TensorFusionModel(nn.Module):
     def __init__(self, modality_indices: list[str],
                  input_dim: int = 16) -> None:
@@ -93,10 +110,14 @@ class TensorFusionModel(nn.Module):
             raise ValueError('Tensor product is only supported for 2 to 4 batch vectors.')
 
 
+# -----------------------------------------------------------------------------
+#                                   InTense
+# -----------------------------------------------------------------------------
 class InTense(nn.Module):
     """
     Full pipeline with configurable interaction order:
       - BN on single embeddings (order 1)
+      - **Optional** linear projection to *tf_latent_dim*.
       - Optionally, pairwise interactions (order 2)
       - Optionally, triple interaction (order 3)
       - Fuse all selected representations with MKLFusion
@@ -110,7 +131,8 @@ class InTense(nn.Module):
         out_features: int = 1,
         intense_reg_rate: float = 0.01,
         intense_p: int = 1,
-        interaction_order: int = 3  # 1: singles, 2: singles + pairs, 3: singles + pairs + triple
+        interaction_order: int = 3,  # 1: singles, 2: singles + pairs, 3: singles + pairs + triple
+        tf_latent_dim: Optional[int] = None,
     ):
         """
         Args:
@@ -124,11 +146,14 @@ class InTense(nn.Module):
         """
         super().__init__()
 
-        if interaction_order not in [1, 2, 3]:
+        if interaction_order not in [1, 2, 3]:  # sanity check
             raise ValueError("interaction_order must be 1, 2, or 3")
         self.interaction_order = interaction_order
+        self.tf_latent_dim = tf_latent_dim
 
-        # (A) BN on single embeddings
+        # ------------------------------------------------------------------
+        # (A)   VBN on single‑modality embeddings
+        # ------------------------------------------------------------------
         self.bn_single = nn.ModuleDict({
             mod_idx: VectorWiseBatchNorm(
                 num_features=dim_dict_single[mod_idx],
@@ -137,7 +162,16 @@ class InTense(nn.Module):
             for mod_idx in ["1", "2", "3"]
         })
 
-        # (B) Models for pairwise interactions (if order >=2)
+        # (A.1) *Optional* linear projection → tf_latent_dim ----------------
+        if self.tf_latent_dim is not None:
+            self.proj_single = nn.ModuleDict({
+                mod_idx: nn.Linear(dim_dict_single[mod_idx], self.tf_latent_dim)
+                for mod_idx in ["1", "2", "3"]
+            })
+
+        # ------------------------------------------------------------------
+        # (B)   Pairwise interactions
+        # ------------------------------------------------------------------
         if self.interaction_order >= 2:
             self.tf_12 = TensorFusionModel(["1", "2"])
             self.tf_13 = TensorFusionModel(["1", "3"])
@@ -158,7 +192,9 @@ class InTense(nn.Module):
                 ),
             })
 
-        # (D) Triple product & normalization (if order == 3)
+        # ------------------------------------------------------------------
+        # (D)   Triple interaction
+        # ------------------------------------------------------------------
         if self.interaction_order == 3:
             self.tf_123 = TensorFusionModel(["1", "2", "3"])
             self.normalize_triple = Normalize3(
@@ -167,19 +203,26 @@ class InTense(nn.Module):
                 mod_index="123"
             )
 
-        # (E) Build in_features for MKLFusion based on interaction order
+        # ------------------------------------------------------------------
+        # (E)   Build MKL‑Fusion input‑dim mapping
+        # ------------------------------------------------------------------
         in_feats = {
-            "z1":  dim_dict_single["1"],
-            "z2":  dim_dict_single["2"],
-            "z3":  dim_dict_single["3"],
+            "z1": dim_dict_single["1"],
+            "z2": dim_dict_single["2"],
+            "z3": dim_dict_single["3"],
         }
         if self.interaction_order >= 2:
-            in_feats["z12"] = feature_dim_dict_triple["12"]
-            in_feats["z13"] = feature_dim_dict_triple["13"]
-            in_feats["z23"] = feature_dim_dict_triple["23"]
+            in_feats |= {
+                "z12": feature_dim_dict_triple["12"],
+                "z13": feature_dim_dict_triple["13"],
+                "z23": feature_dim_dict_triple["23"],
+            }
         if self.interaction_order == 3:
             in_feats["z123"] = feature_dim_dict_triple["123"]
 
+        # ------------------------------------------------------------------
+        # (E)   Final fusion layer
+        # ------------------------------------------------------------------
         self.intense_reg_rate = intense_reg_rate
         self.mkl_fusion = MKLFusion(
             in_features=in_feats,
@@ -188,23 +231,32 @@ class InTense(nn.Module):
             reg_rate=intense_reg_rate,
             intense_p=intense_p
         )
-
-    def forward(self, z_dict: dict[str, torch.Tensor]) -> torch.Tensor:
+    # ---------------------------------------------------------------------
+    #                            forward pass
+    # ---------------------------------------------------------------------
+    def forward(self, z_dict: dict[str, Tensor]) -> torch.Tensor:
         """
         Args:
-            z_dict (dict[str, torch.Tensor]): Dictionary with keys "1", "2", "3"
-              representing individual modality embeddings.
+        z_dict (dict[str, torch.Tensor]): Dictionary with keys "1", "2", "3"
+            representing individual modality embeddings.
         Returns:
             final_out: [B, out_features], e.g., classification logits or regression output.
         """
 
-        # 1) BN on single embeddings
+        # 1) BN over single‑modality embeddings --------------------------------
         z1 = self.bn_single["1"](z_dict["1"])
         z2 = self.bn_single["2"](z_dict["2"])
         z3 = self.bn_single["3"](z_dict["3"])
-        z_dict_norm = {"1": z1, "2": z2, "3": z3}
 
-        tensor_list = [z1, z2, z3]  # always include singles
+        tensor_list = [z1, z2, z3]
+
+        # 1.1) optional projection -------------------------------------------
+        if self.tf_latent_dim is not None:
+            z1 = self.proj_single["1"](z1)
+            z2 = self.proj_single["2"](z2)
+            z3 = self.proj_single["3"](z3)
+
+        z_dict_norm = {"1": z1, "2": z2, "3": z3}
 
         # 2) Pairwise interactions if specified (interaction_order >=2)
         if self.interaction_order >= 2:
@@ -231,8 +283,9 @@ class InTense(nn.Module):
         final_out = self.mkl_fusion(tensor_list)
         return final_out
 
-    def get_regularizer(self):
+    # -------------------------- helpers --------------------------------------
+    def get_regularizer(self) -> Tensor:
         return self.mkl_fusion.regularizer()
 
-    def get_relevance_score(self):
+    def get_relevance_score(self) -> Dict[str, float]:
         return self.mkl_fusion.scores()

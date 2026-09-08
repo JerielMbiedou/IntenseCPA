@@ -2,8 +2,8 @@ import os
 import pandas as pd
 from glob import glob
 
-current_dir = "/home/nmbiedou/Documents/cpa"
-results_dir = os.path.join(current_dir, 'lightning_logs', 'experiment_results')
+current_dir = "/Users/jeriel/Documents/WS24:25/MA/cpa/results/Norman"
+results_dir = os.path.join(current_dir, 'experiment_results')
 os.makedirs(results_dir, exist_ok=True)
 
 # Aggregate original CPA results

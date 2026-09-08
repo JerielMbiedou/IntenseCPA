@@ -451,12 +451,11 @@ class CPA(BaseModelClass):
         use_gpu: Optional[Union[str, int, bool]] = None,
         train_size: float = 0.9,
         validation_size: Optional[float] = None,
-        batch_size: int = 128,
+        batch_size: Optional[int] = None,
         plan_kwargs: Optional[dict] = None,
         save_path: Optional[str] = None,
         check_val_every_n_epoch: int = 10,
         early_stopping_patience: int = 10,
-        num_gpus: Optional[int] = None,
         **trainer_kwargs,
     ):
         """
@@ -493,6 +492,9 @@ class CPA(BaseModelClass):
             n_cells = self.adata.n_obs
             max_epochs = np.min([round((20000 / n_cells) * 400), 400])
         plan_kwargs = plan_kwargs if isinstance(plan_kwargs, dict) else dict()
+        if batch_size is None:
+            batch_size = plan_kwargs["batch_size"]
+            print("Batch size is : " + str(batch_size))
 
         manual_splitting = (
             (self.valid_indices is not None)
@@ -507,7 +509,6 @@ class CPA(BaseModelClass):
                 test_indices=self.test_indices,
                 batch_size=batch_size,
                 use_gpu=use_gpu,
-                num_workers=4
             )
         else:
             data_splitter = DataSplitter(
@@ -541,7 +542,7 @@ class CPA(BaseModelClass):
             **plan_kwargs,
             drug_weights=drug_weights,
         )
-        #trainer_kwargs["early_stopping"] = False
+        trainer_kwargs["early_stopping"] = False
         trainer_kwargs["check_val_every_n_epoch"] = check_val_every_n_epoch
 
         es_callback = EarlyStopping(
@@ -567,12 +568,14 @@ class CPA(BaseModelClass):
         )
         trainer_kwargs["callbacks"].append(checkpoint)
 
-        self.runner = CPATrainRunner(
+        self.runner = TrainRunner(
             self,
             training_plan=self.training_plan,
             data_splitter=data_splitter,
             max_epochs=max_epochs,
-            num_gpus=num_gpus,
+            use_gpu=use_gpu,
+            early_stopping_monitor="cpa_metric",
+            early_stopping_mode="max",
             **trainer_kwargs,
         )
         self.runner()
@@ -580,8 +583,6 @@ class CPA(BaseModelClass):
         self.epoch_history = pd.DataFrame().from_dict(self.training_plan.epoch_history)
         if save_path is not False:
             self.save(save_path, overwrite=True)
-        print("Training finished, setting is_trained_ to True")
-        self.is_trained_ = True
 
     @torch.no_grad()
     def get_latent_representation(
